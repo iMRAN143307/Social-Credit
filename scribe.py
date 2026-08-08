@@ -1,7 +1,7 @@
 import sqlite3
 import csv
 
-conn = sqlite3.connect('data.db')
+conn = sqlite3.connect("/Users/imran/Desktop/Scred/data.db")
 cursor = conn.cursor()
 
 cursor.execute('''
@@ -12,7 +12,7 @@ cursor.execute('''
     )
 ''')
 
-with open('new.csv', 'r') as file:
+with open('/Users/imran/Desktop/Scred/new.csv', 'r') as file:
     for line in file:
         row = line.strip().split(',')
 
@@ -36,7 +36,7 @@ print("-" * 35)
 for row in rows:
     print(f"{row[0]:<2} | {row[1]:<10} | {row[2]}")
 
-with open("new.csv", mode="w", newline="", encoding="utf-8") as file:
+with open("/Users/imran/Desktop/Scred/new.csv", mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     writer.writerows([])
 
