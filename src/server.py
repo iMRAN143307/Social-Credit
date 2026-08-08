@@ -128,13 +128,6 @@ def playground():
       <pre id="post-result">Enter values and click create.</pre>
     </div>
     <div class="group">
-      <h2>GET /api/data?userID=...</h2>
-      <label for="user-id">User ID</label>
-      <input id="user-id" type="text" placeholder="Enter user id" />
-      <button id="get-user">Lookup User</button>
-      <pre id="user-result">Enter a user id and click lookup.</pre>
-    </div>
-    <div class="group">
       <h2>GET /api/balance?user_id=...</h2>
       <label for="balance-user-id">User ID</label>
       <input id="balance-user-id" type="text" placeholder="Enter user id" />
@@ -170,11 +163,6 @@ def playground():
           })
         });
         document.getElementById('post-result').textContent = JSON.stringify(result, null, 2);
-      };
-      document.getElementById('get-user').onclick = async () => {
-        const userId = document.getElementById('user-id').value;
-        const result = await fetchJson('/api/data?userID=' + encodeURIComponent(userId));
-        document.getElementById('user-result').textContent = JSON.stringify(result, null, 2);
       };
       document.getElementById('get-balance').onclick = async () => {
         const userId = document.getElementById('balance-user-id').value;
