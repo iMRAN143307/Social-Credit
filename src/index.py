@@ -7,6 +7,15 @@ load_dotenv()
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 last_sender_by_channel = {}
+
+
+def get_display_name(client, user_id):
+    if not user_id:
+        return None
+    user_info = client.users_info(user=user_id)
+    profile = user_info.get("user", {}).get("profile", {})
+    return profile.get("display_name") or profile.get("real_name") or user_id
+
 balance = 100
 #---------CODE---------
 
@@ -37,16 +46,19 @@ def handle_message_events(event, client):
         return
 
     user = event.get("user")
+    message_text = event.get("text")
     channel = event.get("channel")
     if not user or not channel:
         return
 
     previous_user = last_sender_by_channel.get(channel)
     last_sender_by_channel[channel] = user
+    previous_display_name = get_display_name(client, previous_user) if previous_user else None
 
-    if previous_user != user and previous_user is not None:
-        response_text = f"You responded to <@{previous_user}> I shall now affect their social credit :devious-ahh:"
+    if previous_user != user and previous_user != None:
+        response_text = (f"User: {previous_user}, Display name: {previous_display_name}, Response: {message_text}")
 
+        print(response_text)
         client.chat_postEphemeral(
             channel=channel,
             user=user,
