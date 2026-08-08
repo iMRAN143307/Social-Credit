@@ -1,6 +1,7 @@
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 import os
+import csv
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -57,13 +58,11 @@ def handle_message_events(event, client):
 
     if previous_user != user and previous_user != None:
         response_text = (f"User: {previous_user}, Display name: {previous_display_name}, Response: {message_text}")
-
         print(response_text)
-        client.chat_postEphemeral(
-            channel=channel,
-            user=user,
-            text=response_text
-        )
+
+        with open('data.csv', 'a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([response_text])
 
 #---------BOTTOM THING---------
 
