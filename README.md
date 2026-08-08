@@ -1,6 +1,6 @@
 ## Python shii
-python -m pip install -r requirements.txt
-python src/index.py
+- python -m pip install -r requirements.txt
+- python src/index.py
 
 ## Useful Links
 
