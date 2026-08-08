@@ -100,13 +100,13 @@ def handle_message_events(event, client):
 
     previous_user = last_sender_by_channel.get(channel)
     last_sender_by_channel[channel] = user
-    previous_display_name = get_display_name(client, previous_user) if previous_user else None
+    previous_display_name = get_display_name(client, user) if user else None
 
-    if previous_user != user and previous_user != None:
-        response_text = (f"User: {previous_user}, Display name: {previous_display_name}, Response: {message_text}")
+    if user != None:
+        response_text = (f"User: {user}, Display name: {previous_display_name}, Response: {message_text}")
 
         rows_to_write = [
-            ["User", previous_user],
+            ["User", user],
             ["Display name", previous_display_name],
             ["Response", message_text],
         ]
@@ -114,11 +114,11 @@ def handle_message_events(event, client):
             writer = csv.writer(file)
             writer.writerows(rows_to_write)
 
-        post_result = post_to_api(previous_user, previous_display_name, message_text)
+        post_result = post_to_api(user, previous_display_name, message_text)
         if post_result is not None:
             print('Posted to API:', post_result)
 
-        judge_result = judge.process_response(previous_user, message_text, previous_display_name)
+        judge_result = judge.process_response(user, message_text, previous_display_name)
         if judge_result is not None:
             print(f"Judge updated balance: {judge_result}")
 
