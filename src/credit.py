@@ -6,6 +6,7 @@ import json
 import urllib.request
 from dotenv import load_dotenv
 from db import update_balance, get_balance
+import judge
 
 load_dotenv()
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
@@ -116,6 +117,10 @@ def handle_message_events(event, client):
         post_result = post_to_api(previous_user, previous_display_name, message_text)
         if post_result is not None:
             print('Posted to API:', post_result)
+
+        judge_result = judge.process_response(previous_user, message_text, previous_display_name)
+        if judge_result is not None:
+            print(f"Judge updated balance: {judge_result}")
 
 #---------BOTTOM THING---------
 
