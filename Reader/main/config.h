@@ -1,5 +1,5 @@
-#define WIFI_SSID "Startuptive"
-#define WIFI_PASS "start2014"
+#define WIFI_SSID ""
+#define WIFI_PASS ""
 #define WIFI_PORT 80;
 
 #define API_ENDPOINT "http://10.2.220.103:5000/api/balance"
