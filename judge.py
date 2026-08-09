@@ -42,7 +42,7 @@ def judge(text):
         "Moral", "Motivated", "Natural", "Neat", "Neighborly",
         "Noble", "Non-judgmental", "Nurturing", "Obedient", "Objective",
         "Observant", "Open", "Open-minded", "Optimistic", "Orderly",
-        "Organized", "Original", "Outstanding", "Overcoming", "Pacific",
+        "Organized", "Original", "Outstanding", "Overcoming", "Genius",
         "Pacifist", "Passionate", "Patient", "Peaceful", "Perceptive",
         "Persevering", "Persistent", "Persuasive", "Philanthropic", "Pious",
         "Placid", "Polite", "Positive", "Practical", "Pragmatic",
@@ -66,7 +66,8 @@ def judge(text):
         "Happy", "Revolution", "Together", "Equality", "Trust", "Belief", "Like",
         "Love", "Hope", "Strength", "Comply", "Compliance", "Lenin", "Stalin",
         "Marx", "Karl", "Mao", "Zedong", "Correct", "Pure", "Enough", "Smart",
-        "Connected", "Leader", "Equals", "Equal", "Enjoy"
+        "Connected", "Leader", "Equals", "Equal", "Enjoy", "Comrades", "We",
+        "Our", "Ours"
     ]
 
     bad_words = [
@@ -128,21 +129,22 @@ def judge(text):
         "capitalism", "bank", "interest", "conservatism", "conservative", "unhappy",
         "credit", "rights", "capitalist", "freedom", "class", "rich", "wealth",
         "wealthy", "poor", "poverty", "starvation", "starving", "inequality",
-        "hate", "dislike", "wrong", "incorrect", "corrupt", "conflict"
+        "hate", "dislike", "wrong", "incorrect", "corrupt", "conflict", "worse",
+        "worst", "terrible", "my", "mine", "alone"
     ]
 
-
-
     score = 0
-    reverse = 1
+    modifier = 1
     text = text.split(" ")
     for word in said:
         word = word.lower()
         if word in [good_word.lower() for good_word in good_words]:
             score += 10
-        elif word in bad_words:
+        elif word in [bad_word.lower() for bad_word in bad_words]:
             score -= 10
         elif word in ["not", "cannot", "won't", "can't", "don't", "shan't"]:
-            reverse = -1
+            modifier *= -1
+        elif word in ["very", "super", "extremely"]:
+            modifier *= 2
 
-    return (score * reverse)
+    return (score * modifier)
