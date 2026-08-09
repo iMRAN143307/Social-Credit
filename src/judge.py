@@ -1,6 +1,3 @@
-import db
-
-
 def judge(text):
 
     good_words = [
@@ -45,7 +42,7 @@ def judge(text):
         "Moral", "Motivated", "Natural", "Neat", "Neighborly",
         "Noble", "Non-judgmental", "Nurturing", "Obedient", "Objective",
         "Observant", "Open", "Open-minded", "Optimistic", "Orderly",
-        "Organized", "Original", "Outstanding", "Overcoming", "Pacific",
+        "Organized", "Original", "Outstanding", "Overcoming", "Genius",
         "Pacifist", "Passionate", "Patient", "Peaceful", "Perceptive",
         "Persevering", "Persistent", "Persuasive", "Philanthropic", "Pious",
         "Placid", "Polite", "Positive", "Practical", "Pragmatic",
@@ -65,7 +62,12 @@ def judge(text):
         "Thankful", "Thorough", "Thoughtful", "Tolerant", "Tranquil",
         "Transparent", "Trusting", "Trustworthy", "Truthful", "Unselfish", "Regime",
         "Communism", "Socialism", "Revolt", "Overthrow", "State", "Insurgence",
-        "Progressive", "Progressivism"
+        "Progressive", "Progressivism", "Comrade", "Communist", "Socialist", "Social",
+        "Happy", "Revolution", "Together", "Equality", "Trust", "Belief", "Like",
+        "Love", "Hope", "Strength", "Comply", "Compliance", "Lenin", "Stalin",
+        "Marx", "Karl", "Mao", "Zedong", "Correct", "Pure", "Enough", "Smart",
+        "Connected", "Leader", "Equals", "Equal", "Enjoy", "Comrades", "We",
+        "Our", "Ours"
     ]
 
     bad_words = [
@@ -114,7 +116,7 @@ def judge(text):
         "violation", "infringement", "breach", "contravention", "noncompliance",
         "defiance", "unruliness", "disruptiveness", "uncooperativeness", "recalcitrance",
         "intractability", "unmanageability", "wildness", "savagery", "barbarism",
-        "brutishness", "ferocity", "fiercenes s", "viciousness", "destructiveness",
+        "brutishness", "ferocity", "fierceness", "viciousness", "destructiveness",
         "ruinousness", "perniciousness", "banefulness", "noxiousness", "toxicity",
         "venomousness", "poisonousness", "virulence", "malignancy", "spitefulness",
         "maliciousness", "cattiness", "snideness", "sarcasm", "mockery", "ridicule",
@@ -124,31 +126,39 @@ def judge(text):
         "chastisement", "reprimand", "rebuke", "reproof", "reproach", "upbraiding",
         "scolding", "berating", "reviling", "vituperation", "obloquy", "opprobrium",
         "abuse", "insult", "affront", "slight", "snub", "indignity", "money", "currency",
-        "capitalism", "bank", "interest", "conservatism", "conservative"
+        "capitalism", "bank", "interest", "conservatism", "conservative", "unhappy",
+        "credit", "rights", "capitalist", "freedom", "class", "rich", "wealth",
+        "wealthy", "poor", "poverty", "starvation", "starving", "inequality",
+        "hate", "dislike", "wrong", "incorrect", "corrupt", "conflict", "worse",
+        "worst", "terrible", "my", "mine", "alone"
     ]
 
     score = 0
+    modifier = 1
     text = text.split(" ")
     for word in text:
-        if word.lower() in [good_word.lower() for good_word in good_words]:
+        word = word.lower()
+        if word in [good_word.lower() for good_word in good_words]:
             score += 10
-        if word.lower() in [bad_word.lower() for bad_word in bad_words]:
+        elif word in [bad_word.lower() for bad_word in bad_words]:
             score -= 10
+        elif word in ["not", "cannot", "won't", "can't", "don't", "shan't"]:
+            modifier *= -1
+        elif word in ["very", "super", "extremely"]:
+            modifier *= 2
 
-    return score
+    return (score * modifier)
 
 
 def process_response(user_id, text, display_name=None):
-    if not user_id:
-        raise ValueError('user_id is required')
-    if display_name is None:
-        display_name = user_id
+    """Evaluate a Slack response and update the user's social credit balance."""
+    from db import get_balance, update_balance
 
-    score_delta = judge(text)
-    new_balance = db.update_balance(user_id, display_name, score_delta)
-    return {
-        'user_id': user_id,
-        'display_name': display_name,
-        'score_delta': score_delta,
-        'new_balance': new_balance,
-    }
+    score = judge(text)
+    if user_id is None:
+        return None
+
+    if get_balance(user_id) is None:
+        update_balance(user_id, display_name or user_id, 0)
+
+    return update_balance(user_id, display_name or user_id, score)
