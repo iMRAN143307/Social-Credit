@@ -4,26 +4,21 @@
 #include <MFRC522.h>
 #include <SPI.h>
 
+#include <WiFi.h>
+#include <esp_http_client.h>
 
-#define LV_CONF_SKIP 1
-#define LV_USE_STDLIB_MALLOC 1
-#define LV_COLOR_DEPTH 16
+#include "config.h"
 
-#define CLK 7
-#define MISO 5
-#define MOSI 6
-#define CS_LCD 10
-#define CS_READER 15
-#define RST_LCD 13
-#define RST_READER 4
-#define DC_LCD 9
-
-lv_obj_t *textbox;
+lv_obj_t *textbox1;
+lv_obj_t *image;
+lv_obj_t *textbox2;
 
 MFRC522 rfid(CS_READER, RST_READER);
 
 // Init array that will store new NUID 
 byte nuidPICC[4];
+
+LV_IMAGE_DECLARE(Hammer_Sickle);
 
 // Setup the custom LovyanGFX configuration class for ST7735 128x160
 class LGFX : public lgfx::LGFX_Device {
@@ -72,6 +67,38 @@ LGFX tft;  // Create the safe display driver object container
 
 uint8_t *draw_buf;  // Create a pointer to allocate via heap dynamic memory
 
+esp_err_t _http_event_handler(esp_http_client_event_t *evt) {
+    switch(evt->event_id) {
+        case HTTP_EVENT_ERROR:
+            Serial.println("HTTP_EVENT_ERROR");
+            break;
+        case HTTP_EVENT_ON_CONNECTED:
+            Serial.println("HTTP_EVENT_ON_CONNECTED");
+            break;
+        case HTTP_EVENT_HEADER_SENT:
+            Serial.println("HTTP_EVENT_HEADER_SENT");
+            break;
+        case HTTP_EVENT_ON_HEADER:
+            Serial.printf("HTTP_EVENT_ON_HEADER, key=%s, value=%s\n", evt->header_key, evt->header_value);
+            break;
+        case HTTP_EVENT_ON_DATA:
+            Serial.println("HTTP_EVENT_ON_DATA");
+            if (!esp_http_client_is_chunked_response(evt->client)) {
+                // Print incoming data to Serial Monitor
+                Serial.write((uint8_t*)evt->data, evt->data_len);
+                Serial.println();
+            }
+            break;
+        case HTTP_EVENT_ON_FINISH:
+            Serial.println("HTTP_EVENT_ON_FINISH");
+            break;
+        case HTTP_EVENT_DISCONNECTED:
+            Serial.println("HTTP_EVENT_DISCONNECTED");
+            break;
+    }
+    return ESP_OK;
+}
+
 void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
   uint32_t w = (area->x2 - area->x1 + 1);
   uint32_t h = (area->y2 - area->y1 + 1);
@@ -90,22 +117,23 @@ static uint32_t my_tick(void) {
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial)
-    ;
+  while (!Serial);
 
-  pinMode(CS_LCD, OUTPUT);
-
+  //----SPI STUFF----
   SPI.begin(CLK, MISO, MOSI, CS_READER);
   rfid.PCD_Init();
   delay(4);
   rfid.PCD_DumpVersionToSerial();
   Serial.println("Ready to scan");
 
+
+  //----TFT STUFF----
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(TFT_BLUE);
   tft.setSwapBytes(true);
 
+  //----LVGL STUFF----
   lv_init();
   Serial.println("LVGL initialized");
   lv_tick_set_cb(my_tick);
@@ -129,22 +157,37 @@ void setup() {
   if (scr != NULL) {
     lv_obj_set_style_bg_color(scr, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_flex_flow(scr, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(scr, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     Serial.println("Set background");
   }
 
-  textbox = lv_label_create(scr);
+  textbox1 = lv_label_create(scr);
 
-  if (textbox != NULL) {
-    lv_label_set_text(textbox, "LovyanGFX Active!");
-    lv_obj_align(textbox, LV_ALIGN_CENTER, 0, 0);
-    Serial.println("Set textbox");
+  if (textbox1 != NULL) {
+    lv_label_set_text(textbox1, "Scan Card:");
+    Serial.println("Set textbox1");
   }
+
+  image = lv_image_create(scr);
+  if (image != NULL) {
+    lv_image_set_src(image, &Hammer_Sickle);
+    
+  }
+
+  //----WiFi Stuff---- woof
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  Serial.println("Connecting to WiFi");
+
+  while (WiFi.status() != WL_CONNECTED);
+
+  Serial.print("WiFi Connected. IP:");
+  Serial.println(WiFi.localIP());
 }
 
 void loop() {
   lv_timer_handler();
   delay(5);
-
 
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
     Serial.print(F("PICC type: "));
@@ -159,7 +202,7 @@ void loop() {
 
     if (rfid.uid.uidByte[0] != nuidPICC[0] || rfid.uid.uidByte[1] != nuidPICC[1] || rfid.uid.uidByte[2] != nuidPICC[2] || rfid.uid.uidByte[3] != nuidPICC[3]) {
       Serial.println(F("A new card has been detected."));
-      lv_label_set_text(textbox, "A new card has been detected.");
+      lv_label_set_text(textbox1, "New Card");
 
       // Store NUID into nuidPICC array
       for (byte i = 0; i < 4; i++) {
@@ -175,7 +218,7 @@ void loop() {
       Serial.println();
     } else {
       Serial.println(F("Card read previously."));
-      lv_label_set_text(textbox, "Card read previously.");
+      lv_label_set_text(textbox1, "Card read.");
     }
 
     // Halt PICC
@@ -183,6 +226,28 @@ void loop() {
 
     // Stop encryption on PCD
     rfid.PCD_StopCrypto1();
+
+    if (WiFi.status() == WL_CONNECTED) {
+      esp_http_client_config_t config = {};
+      config.url = API_ENDPOINT;
+      config.event_handler = _http_event_handler;
+      config.method = HTTP_METHOD_GET;
+
+      esp_http_client_handle_t client = esp_http_client_init(&config);
+
+      esp_err_t err = esp_http_client_perform(client);
+
+    if (err == ESP_OK) {
+        Serial.printf("HTTP GET Status = %d, content_length = %d\n",
+                esp_http_client_get_status_code(client),
+                esp_http_client_get_content_length(client));
+    } else {
+        Serial.printf("HTTP GET request failed: %s\n", esp_err_to_name(err));
+    }
+
+    // Clean up and free memory
+    esp_http_client_cleanup(client);
+    }
   }
 }
 
@@ -199,3 +264,6 @@ void printDec(byte *buffer, byte bufferSize) {
     Serial.print(buffer[i], DEC);
   }
 }
+
+//Yip yip
+
