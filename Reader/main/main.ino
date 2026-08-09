@@ -15,7 +15,7 @@ lv_obj_t *textbox2;
 
 MFRC522 rfid(CS_READER, RST_READER);
 
-// Init array that will store new NUID 
+// Init array that will store new NUID
 byte nuidPICC[4];
 
 LV_IMAGE_DECLARE(Hammer_Sickle);
@@ -68,35 +68,35 @@ LGFX tft;  // Create the safe display driver object container
 uint8_t *draw_buf;  // Create a pointer to allocate via heap dynamic memory
 
 esp_err_t _http_event_handler(esp_http_client_event_t *evt) {
-    switch(evt->event_id) {
-        case HTTP_EVENT_ERROR:
-            Serial.println("HTTP_EVENT_ERROR");
-            break;
-        case HTTP_EVENT_ON_CONNECTED:
-            Serial.println("HTTP_EVENT_ON_CONNECTED");
-            break;
-        case HTTP_EVENT_HEADER_SENT:
-            Serial.println("HTTP_EVENT_HEADER_SENT");
-            break;
-        case HTTP_EVENT_ON_HEADER:
-            Serial.printf("HTTP_EVENT_ON_HEADER, key=%s, value=%s\n", evt->header_key, evt->header_value);
-            break;
-        case HTTP_EVENT_ON_DATA:
-            Serial.println("HTTP_EVENT_ON_DATA");
-            if (!esp_http_client_is_chunked_response(evt->client)) {
-                // Print incoming data to Serial Monitor
-                Serial.write((uint8_t*)evt->data, evt->data_len);
-                Serial.println();
-            }
-            break;
-        case HTTP_EVENT_ON_FINISH:
-            Serial.println("HTTP_EVENT_ON_FINISH");
-            break;
-        case HTTP_EVENT_DISCONNECTED:
-            Serial.println("HTTP_EVENT_DISCONNECTED");
-            break;
-    }
-    return ESP_OK;
+  switch (evt->event_id) {
+    case HTTP_EVENT_ERROR:
+      Serial.println("HTTP_EVENT_ERROR");
+      break;
+    case HTTP_EVENT_ON_CONNECTED:
+      Serial.println("HTTP_EVENT_ON_CONNECTED");
+      break;
+    case HTTP_EVENT_HEADER_SENT:
+      Serial.println("HTTP_EVENT_HEADER_SENT");
+      break;
+    case HTTP_EVENT_ON_HEADER:
+      Serial.printf("HTTP_EVENT_ON_HEADER, key=%s, value=%s\n", evt->header_key, evt->header_value);
+      break;
+    case HTTP_EVENT_ON_DATA:
+      Serial.println("HTTP_EVENT_ON_DATA");
+      if (!esp_http_client_is_chunked_response(evt->client)) {
+        // Print incoming data to Serial Monitor
+        Serial.write((uint8_t *)evt->data, evt->data_len);
+        Serial.println();
+      }
+      break;
+    case HTTP_EVENT_ON_FINISH:
+      Serial.println("HTTP_EVENT_ON_FINISH");
+      break;
+    case HTTP_EVENT_DISCONNECTED:
+      Serial.println("HTTP_EVENT_DISCONNECTED");
+      break;
+  }
+  return ESP_OK;
 }
 
 void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
@@ -115,9 +115,31 @@ static uint32_t my_tick(void) {
   return millis();
 }
 
+static void reset_screen(void) {
+  if (textbox1 != NULL) {
+    lv_label_set_text(textbox1, "Scan Card:");
+    Serial.println("Set textbox1");
+  }
+  if (image != NULL) {
+    lv_image_set_src(image, &Hammer_Sickle);
+    lv_obj_remove_flag(image, LV_OBJ_FLAG_HIDDEN);
+    Serial.println("Set image");
+  }
+  if (textbox2 != NULL) {
+    lv_obj_add_flag(textbox2, LV_OBJ_FLAG_HIDDEN);
+    Serial.println("Set textbox2");
+  }
+}
+
+static void reset_screen_cb(lv_timer_t *timer) {
+  reset_screen();
+  lv_timer_del(timer);
+}
+
 void setup() {
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial)
+    ;
 
   //----SPI STUFF----
   SPI.begin(CLK, MISO, MOSI, CS_READER);
@@ -163,23 +185,17 @@ void setup() {
   }
 
   textbox1 = lv_label_create(scr);
-
-  if (textbox1 != NULL) {
-    lv_label_set_text(textbox1, "Scan Card:");
-    Serial.println("Set textbox1");
-  }
-
   image = lv_image_create(scr);
-  if (image != NULL) {
-    lv_image_set_src(image, &Hammer_Sickle);
-    
-  }
+  textbox2 = lv_label_create(scr);
+
+  reset_screen();
 
   //----WiFi Stuff---- woof
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   Serial.println("Connecting to WiFi");
 
-  while (WiFi.status() != WL_CONNECTED);
+  while (WiFi.status() != WL_CONNECTED)
+    ;
 
   Serial.print("WiFi Connected. IP:");
   Serial.println(WiFi.localIP());
@@ -190,6 +206,9 @@ void loop() {
   delay(5);
 
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    lv_obj_add_flag(image, LV_OBJ_FLAG_HIDDEN);
+    lv_label_set_text(textbox1, "Balance:");
+
     Serial.print(F("PICC type: "));
     MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
     Serial.println(rfid.PICC_GetTypeName(piccType));
@@ -200,26 +219,21 @@ void loop() {
       return;
     }
 
-    if (rfid.uid.uidByte[0] != nuidPICC[0] || rfid.uid.uidByte[1] != nuidPICC[1] || rfid.uid.uidByte[2] != nuidPICC[2] || rfid.uid.uidByte[3] != nuidPICC[3]) {
-      Serial.println(F("A new card has been detected."));
-      lv_label_set_text(textbox1, "New Card");
-
-      // Store NUID into nuidPICC array
-      for (byte i = 0; i < 4; i++) {
-        nuidPICC[i] = rfid.uid.uidByte[i];
-      }
-
-      Serial.println(F("The NUID tag is:"));
-      Serial.print(F("In hex: "));
-      printHex(rfid.uid.uidByte, rfid.uid.size);
-      Serial.println();
-      Serial.print(F("In dec: "));
-      printDec(rfid.uid.uidByte, rfid.uid.size);
-      Serial.println();
-    } else {
-      Serial.println(F("Card read previously."));
-      lv_label_set_text(textbox1, "Card read.");
+    // Store NUID into nuidPICC array
+    for (byte i = 0; i < 4; i++) {
+      nuidPICC[i] = rfid.uid.uidByte[i];
     }
+
+    Serial.println(F("The NUID tag is:"));
+    Serial.print(F("In hex: "));
+    printHex(rfid.uid.uidByte, rfid.uid.size);
+    Serial.println();
+    Serial.print(F("In dec: "));
+    printDec(rfid.uid.uidByte, rfid.uid.size);
+    Serial.println();
+
+    lv_label_set_text(textbox2, "123456");
+    lv_obj_clear_flag(textbox2, LV_OBJ_FLAG_HIDDEN);
 
     // Halt PICC
     rfid.PICC_HaltA();
@@ -227,27 +241,29 @@ void loop() {
     // Stop encryption on PCD
     rfid.PCD_StopCrypto1();
 
-    if (WiFi.status() == WL_CONNECTED) {
-      esp_http_client_config_t config = {};
-      config.url = API_ENDPOINT;
-      config.event_handler = _http_event_handler;
-      config.method = HTTP_METHOD_GET;
+    //   if (WiFi.status() == WL_CONNECTED) {
+    //     esp_http_client_config_t config = {};
+    //     config.url = API_ENDPOINT;
+    //     config.event_handler = _http_event_handler;
+    //     config.method = HTTP_METHOD_GET;
 
-      esp_http_client_handle_t client = esp_http_client_init(&config);
+    //     esp_http_client_handle_t client = esp_http_client_init(&config);
 
-      esp_err_t err = esp_http_client_perform(client);
+    //     esp_err_t err = esp_http_client_perform(client);
 
-    if (err == ESP_OK) {
-        Serial.printf("HTTP GET Status = %d, content_length = %d\n",
-                esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
-    } else {
-        Serial.printf("HTTP GET request failed: %s\n", esp_err_to_name(err));
-    }
+    //     if (err == ESP_OK) {
+    //       Serial.printf("HTTP GET Status = %d, content_length = %d\n",
+    //                     esp_http_client_get_status_code(client),
+    //                     esp_http_client_get_content_length(client));
+    //     } else {
+    //       Serial.printf("HTTP GET request failed: %s\n", esp_err_to_name(err));
+    //     }
 
-    // Clean up and free memory
-    esp_http_client_cleanup(client);
-    }
+    //     // Clean up and free memory
+    //     esp_http_client_cleanup(client);
+    //   }
+
+    lv_timer_t *timer = lv_timer_create(reset_screen_cb, 5000, NULL);
   }
 }
 
@@ -266,4 +282,3 @@ void printDec(byte *buffer, byte bufferSize) {
 }
 
 //Yip yip
-
