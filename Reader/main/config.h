@@ -1,8 +1,8 @@
-#define WIFI_SSID "Startuptive"
-#define WIFI_PASS "start2014"
+#define WIFI_SSID ""
+#define WIFI_PASS ""
 #define WIFI_PORT 80;
 
-#define API_ENDPOINT "https://api-v3.mbta.com/predictions?filter[stop]=2044,2049&filter[route]=71&include=trip&page[limit]=4&sort=arrival_time"
+#define API_ENDPOINT "http://10.2.220.103:5000/api/balance"
 
 #define CLK 7
 #define MISO 5
