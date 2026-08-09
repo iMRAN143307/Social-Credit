@@ -1,13 +1,9 @@
-## Python shii
-- python -m pip install -r requirements.txt
-- python src/index.py
+## Slack
 
-## Running
-- python -u src/server.py
-- python -u src/credit.py
+- add here
 
-## Useful Links
+## Commands
 
-- [Slack Bolt Documentation](https://slack.dev/bolt-js/)
-- [Slack API Reference](https://api.slack.com/methods)
-- [Socket Mode Guide](https://api.slack.com/socketmode)
+- /social-credit to check your social credit
+- Use sentences such as "I support capitalism" to lower your social credit
+- Use sentences such as "I support communism" to raise your social credit
