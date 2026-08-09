@@ -1,12 +1,6 @@
 ## Slack
 
-Required environment variables:
-
-- `SLACK_BOT_TOKEN` — bot token for your Slack app
-- `SLACK_SIGNING_SECRET` — signing secret used by Slack request verification
-- `SLACK_APP_TOKEN` — app-level token for Socket Mode
-
-Use a `.env` file or your system environment to set these before running the app.
+Join #the-revolution to get started
 
 ## Commands
 
