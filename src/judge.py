@@ -67,7 +67,7 @@ def judge(text):
         "Love", "Hope", "Strength", "Comply", "Compliance", "Lenin", "Stalin",
         "Marx", "Karl", "Mao", "Zedong", "Correct", "Pure", "Enough", "Smart",
         "Connected", "Leader", "Equals", "Equal", "Enjoy", "Comrades", "We",
-        "Our", "Ours"
+        "Our", "Ours", "meow", "yip", "mraow", ":3", "gay", "social", "credit"
     ]
 
     bad_words = [
@@ -130,7 +130,7 @@ def judge(text):
         "credit", "rights", "capitalist", "freedom", "class", "rich", "wealth",
         "wealthy", "poor", "poverty", "starvation", "starving", "inequality",
         "hate", "dislike", "wrong", "incorrect", "corrupt", "conflict", "worse",
-        "worst", "terrible", "my", "mine", "alone"
+        "worst", "terrible", "my", "mine", "alone", "israel", "mean", "bad", "sad"
     ]
 
     score = 0
@@ -144,8 +144,10 @@ def judge(text):
             score -= 10
         elif word in ["not", "cannot", "won't", "can't", "don't", "shan't"]:
             modifier *= -1
-        elif word in ["very", "super", "extremely"]:
-            modifier *= 2
+        elif word in ["very", "super", "extremely", "really", "a lot"]:
+            modifier += 1
+        else:
+            score += 1
 
     return (score * modifier)
 
