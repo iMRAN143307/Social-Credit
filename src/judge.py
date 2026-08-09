@@ -145,7 +145,10 @@ def judge(text):
         elif word in ["not", "cannot", "won't", "can't", "don't", "shan't"]:
             modifier *= -1
         elif word in ["very", "super", "extremely", "really", "a lot"]:
-            modifier += 1
+            if modifier >= 0:
+                modifier += 1
+            else:
+                modifier -= 1
         else:
             score += 1
 
